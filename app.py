@@ -8,7 +8,7 @@ from Pages.probability_converter import show_probability_converter
 
 
 st.set_page_config(
-    page_title="Trading Toolkit v0",
+    page_title="Trading Toolkit",
     layout="wide",
 )
 
