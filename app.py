@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 
-st.sidebar.title("Trading Toolkit v0")
+st.sidebar.title("Trading Toolkit")
 
 page = st.sidebar.radio(
     "Navigation",
