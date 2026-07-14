@@ -1,7 +1,6 @@
 import streamlit as st
 
 from logic.odds_logic import OddsConverterEngine
-from templates.odds_result import OddsResultTemplate
 
 
 st.set_page_config(
@@ -151,17 +150,55 @@ if page == "Odds Key Converter":
             "<p style='text-align:center;'>Waiting for conversion...</p>",
             unsafe_allow_html=True,
         )
+
     else:
-        result_html = OddsResultTemplate.build(
-            st.session_state.odds_result,
-            labels,
-        )
+        result = st.session_state.odds_result
 
-        st.markdown(
-            result_html,
-            unsafe_allow_html=True,
-        )
+        detected_column, target_column = st.columns(2)
 
+        with detected_column:
+            st.metric(
+                "Detected Odds Key",
+                OddsConverterEngine.format_percentage(
+                    result["detected_key"]
+                ),
+            )
+
+        with target_column:
+            st.metric(
+                "Target Odds Key",
+                OddsConverterEngine.format_percentage(
+                    result["target_key"]
+                ),
+            )
+
+        st.divider()
+        st.subheader("Converted Odds")
+
+        for index, label in enumerate(labels):
+            original_odd = OddsConverterEngine.format_odd(
+                result["original_odds"][index]
+            )
+
+            converted_odd = OddsConverterEngine.format_odd(
+                result["converted_odds"][index]
+            )
+
+            label_column, original_column, arrow_column, converted_column = (
+                st.columns([2, 1, 0.4, 1])
+            )
+
+            with label_column:
+                st.write(f"**{label}**")
+
+            with original_column:
+                st.write(original_odd)
+
+            with arrow_column:
+                st.write("→")
+
+            with converted_column:
+                st.write(f"**{converted_odd}**")
 
 elif page == "Probability Converter":
     st.title("Probability Converter")
