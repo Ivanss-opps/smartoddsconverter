@@ -1,10 +1,36 @@
 import streamlit as st
 
+from logic.odds_logic import OddsConverterEngine
+from templates.odds_result import OddsResultTemplate
+
 
 st.set_page_config(
     page_title="Trading Toolkit v0",
     layout="wide",
 )
+
+
+def reset_odds_converter():
+    """Clear the Odds Key Converter inputs and result."""
+    keys_to_remove = [
+        key
+        for key in st.session_state
+        if key.startswith("odds_input_")
+    ]
+
+    for key in keys_to_remove:
+        del st.session_state[key]
+
+    st.session_state.odds_result = None
+
+
+def market_changed():
+    """Reset inputs and result when the selected market changes."""
+    reset_odds_converter()
+
+
+if "odds_result" not in st.session_state:
+    st.session_state.odds_result = None
 
 
 st.sidebar.title("Trading Toolkit v0")
@@ -24,22 +50,136 @@ page = st.sidebar.radio(
 if page == "Odds Key Converter":
     st.title("Odds Key Converter")
     st.divider()
-    st.write("Streamlit conversion in progress.")
+
+    settings_column_1, settings_column_2 = st.columns(2)
+
+    with settings_column_1:
+        market = st.selectbox(
+            "Market",
+            ["Winner", "1X2", "Totals", "Handicap"],
+            key="odds_market",
+            on_change=market_changed,
+        )
+
+    with settings_column_2:
+        target_key_text = st.selectbox(
+            "Target Odds Key",
+            [f"{value}%" for value in range(100, 121)],
+            index=8,
+            key="odds_target_key",
+        )
+
+    st.divider()
+    st.subheader("Input Odds")
+
+    if market == "1X2":
+        labels = ["Home", "Draw", "Away"]
+    elif market == "Totals":
+        labels = ["Over", "Under"]
+    else:
+        labels = ["Home", "Away"]
+
+    with st.form("odds_converter_form"):
+        input_keys = []
+
+        for index, label in enumerate(labels):
+            input_key = f"odds_input_{index}"
+            input_keys.append(input_key)
+
+            st.text_input(
+                label,
+                placeholder=f"Enter {label} odds",
+                key=input_key,
+            )
+
+        st.divider()
+
+        button_column_1, button_column_2 = st.columns(2)
+
+        with button_column_1:
+            convert_button = st.form_submit_button(
+                "Convert",
+                use_container_width=True,
+            )
+
+        with button_column_2:
+            st.form_submit_button(
+                "Reset",
+                use_container_width=True,
+                on_click=reset_odds_converter,
+            )
+
+    if convert_button:
+        odds = []
+        valid_odds = True
+
+        for input_key in input_keys:
+            text = st.session_state.get(input_key, "").strip()
+
+            try:
+                odd = float(text)
+
+                if odd <= 1:
+                    valid_odds = False
+                    break
+
+                odds.append(odd)
+
+            except ValueError:
+                valid_odds = False
+                break
+
+        if not valid_odds:
+            st.session_state.odds_result = None
+            st.error("Please enter valid odds.")
+
+        else:
+            target_key = float(
+                target_key_text.replace("%", "")
+            ) / 100
+
+            st.session_state.odds_result = OddsConverterEngine.convert(
+                odds,
+                target_key,
+            )
+
+    st.divider()
+    st.subheader("Results")
+
+    if st.session_state.odds_result is None:
+        st.markdown(
+            "<p style='text-align:center;'>Waiting for conversion...</p>",
+            unsafe_allow_html=True,
+        )
+    else:
+        result_html = OddsResultTemplate.build(
+            st.session_state.odds_result,
+            labels,
+        )
+
+        st.markdown(
+            result_html,
+            unsafe_allow_html=True,
+        )
+
 
 elif page == "Probability Converter":
     st.title("Probability Converter")
     st.divider()
     st.write("Streamlit conversion in progress.")
 
+
 elif page == "Fair Odds Calculator":
     st.title("Fair Odds Calculator")
     st.divider()
     st.write("Streamlit conversion in progress.")
 
+
 elif page == "Margin Calculator":
     st.title("Margin Calculator")
     st.divider()
     st.write("Streamlit conversion in progress.")
+
 
 elif page == "About":
     st.title("Trading Toolkit v0")
