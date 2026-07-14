@@ -23,6 +23,6 @@ quick and reliable betting utilities.
 
 Version 0.0.2
 
-Built with Python & Streamlit by I.S. & AI.
+Built with Python & Streamlit by 99% AI.
 """
     )
